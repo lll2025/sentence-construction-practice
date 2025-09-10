@@ -3,121 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <title>连词成句练习</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body {
-      font-family: "Microsoft YaHei", Arial, sans-serif;
-      background: #f7f9fc;
-      margin: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
       padding: 20px;
-      color: #333;
+      background-color: #f4f6f9;
     }
     h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #2c3e50;
+      color: #333;
     }
-    textarea {
-      width: 100%;
-      height: 120px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      font-size: 14px;
-      resize: none;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    button {
-      background: #3498db;
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      margin-top: 10px;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #2980b9;
-    }
-    #qrcode {
-      margin-top: 20px;
-      text-align: center;
-    }
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      padding: 20px;
+    #sentenceContainer {
       margin: 20px auto;
-      max-width: 700px;
-    }
-    .word-container, .dropzone {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 15px 0;
+      padding: 20px;
+      width: 90%;
+      max-width: 600px;
+      min-height: 150px;
+      border: 2px dashed #aaa;
+      border-radius: 10px;
+      background-color: #fff;
     }
     .word {
-      padding: 8px 14px;
-      background: #ecf0f1;
+      display: inline-block;
+      padding: 8px 12px;
+      margin: 5px;
+      font-size: 18px;
+      background-color: #e0f7fa;
+      border: 1px solid #0097a7;
       border-radius: 8px;
-      cursor: grab;
-      transition: 0.2s;
+      cursor: pointer;
       user-select: none;
     }
-    .word:hover {
-      background: #d0d7de;
-    }
-    .dropzone {
-      min-height: 60px;
-      border: 2px dashed #bdc3c7;
-      border-radius: 8px;
+    #answer {
+      margin: 20px auto;
       padding: 10px;
-      background: #fafafa;
+      min-height: 50px;
+      width: 90%;
+      max-width: 600px;
+      border: 2px solid #4caf50;
+      border-radius: 10px;
+      background-color: #f1f8e9;
     }
-    .check-btn {
-      background: #2ecc71;
-      margin-top: 10px;
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
     }
-    .check-btn:hover {
-      background: #27ae60;
+    button:hover {
+      background-color: #45a049;
+    }
+    #result {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    #studentNameContainer {
+      margin: 15px 0;
+    }
+    input[type="text"] {
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
 <body>
-  <h2>老师端：输入练习句子（每行一句，词之间用空格分开）</h2>
-  <div class="card">
-    <textarea id="sentencesInput" placeholder="例如：\n我 喜欢 学习 中文\n明天 我们 去 公园 散步"></textarea>
-    <button onclick="generateQRCode()">生成练习和二维码</button>
-    <div id="qrcode"></div>
+  <h2>连词成句练习</h2>
+
+  <div id="studentNameContainer">
+    <label>请输入姓名: </label>
+    <input type="text" id="studentName" placeholder="姓名">
   </div>
 
+  <div id="sentenceContainer"></div>
+  <div id="answer"></div>
+  
+  <button onclick="checkAnswer()">提交答案</button>
+  <button onclick="nextSentence()">下一题</button>
+  <div id="result"></div>
+
   <script>
-    // 生成二维码
-    function generateQRCode() {
-      const sentences = document.getElementById("sentencesInput").value.trim();
-      if (!sentences) { alert("请输入句子！"); return; }
+    // Google Apps Script API 地址（替换成你自己的）
+    const SCRIPT_URL = "https://script.google.com/macros/s/你的AppsScript部署ID/exec";
 
-      // 清理每行多余空格
-      const cleanSentences = sentences
-        .split("\n")
-        .map(s => s.trim().replace(/\s+/g, " "))
-        .join("\n");
+    // 获取题目数据（来自 URL 参数 data）
+    const params = new URLSearchParams(window.location.search);
+    const sentences = params.get("data") ? params.get("data").split("\n") : [];
+    let currentIndex = 0;
+    let currentSentence = "";
 
-      const encoded = encodeURIComponent(cleanSentences);
-      const url = window.location.origin + window.location.pathname + "?exercise=" + encoded;
-
-      document.getElementById("qrcode").innerHTML = "";
-      new QRCode(document.getElementById("qrcode"), {
-        text: url,
-        width: 200,
-        height: 200
-      });
-    }
-
-    // 随机打乱
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -126,81 +106,72 @@
       return array;
     }
 
-    // 学生端初始化
-    function initExercise(sentences) {
-      document.body.innerHTML = "<h2>学生端：连词成句练习</h2>";
+    function loadSentence() {
+      if (currentIndex >= sentences.length) {
+        document.getElementById("sentenceContainer").innerHTML = "练习结束！";
+        document.getElementById("answer").innerHTML = "";
+        return;
+      }
+      currentSentence = sentences[currentIndex].trim();
+      const words = shuffle(currentSentence.split(" ").filter(w => w.length > 0));
 
-      sentences.forEach((sentence, index) => {
-        const words = sentence.split(" ").filter(w => w);
-        const shuffled = shuffle([...words]);
+      document.getElementById("sentenceContainer").innerHTML = "";
+      document.getElementById("answer").innerHTML = "";
+      document.getElementById("result").innerHTML = "";
 
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `<h3>第 ${index + 1} 题</h3>`;
-
-        // 乱序词块
-        const wordContainer = document.createElement("div");
-        wordContainer.className = "word-container";
-        shuffled.forEach(word => {
-          const w = document.createElement("div");
-          w.className = "word";
-          w.textContent = word;
-          w.draggable = true;
-
-          w.addEventListener("dragstart", e => {
-            e.dataTransfer.setData("text/plain", word);
-            e.target.style.opacity = "0.5";
-          });
-          w.addEventListener("dragend", e => {
-            e.target.style.opacity = "1";
-          });
-
-          wordContainer.appendChild(w);
-        });
-
-        // 答案区
-        const dropzone = document.createElement("div");
-        dropzone.className = "dropzone";
-        dropzone.addEventListener("dragover", e => e.preventDefault());
-        dropzone.addEventListener("drop", e => {
-          e.preventDefault();
-          const word = e.dataTransfer.getData("text/plain");
-          const w = document.createElement("div");
-          w.className = "word";
-          w.textContent = word;
-          dropzone.appendChild(w);
-        });
-
-        // 检查答案
-        const checkBtn = document.createElement("button");
-        checkBtn.className = "check-btn";
-        checkBtn.textContent = "检查答案";
-        checkBtn.addEventListener("click", () => {
-          const answer = Array.from(dropzone.querySelectorAll(".word")).map(w => w.textContent).join(" ");
-          if (answer === sentence) {
-            alert("✅ 正确！");
-          } else {
-            alert("❌ 错误！正确答案是：" + sentence);
-          }
-        });
-
-        card.appendChild(wordContainer);
-        card.appendChild(dropzone);
-        card.appendChild(checkBtn);
-        document.body.appendChild(card);
+      words.forEach(word => {
+        const span = document.createElement("span");
+        span.className = "word";
+        span.innerText = word;
+        span.onclick = function () {
+          document.getElementById("answer").appendChild(span);
+        };
+        document.getElementById("sentenceContainer").appendChild(span);
       });
     }
 
-    // 学生端入口
-    const params = new URLSearchParams(window.location.search);
-    if (params.has("exercise")) {
-      const sentences = decodeURIComponent(params.get("exercise"))
-        .split("\n")
-        .map(s => s.trim().replace(/\s+/g, " "))
-        .filter(s => s);
-      initExercise(sentences);
+    function checkAnswer() {
+      const answer = Array.from(document.getElementById("answer").children).map(el => el.innerText).join(" ");
+      const resultDiv = document.getElementById("result");
+      if (!answer) {
+        resultDiv.innerText = "请先选择单词！";
+        resultDiv.style.color = "orange";
+        return;
+      }
+
+      if (answer === currentSentence) {
+        resultDiv.innerText = "✅ 正确！";
+        resultDiv.style.color = "green";
+      } else {
+        resultDiv.innerText = "❌ 错误！正确答案是: " + currentSentence;
+        resultDiv.style.color = "red";
+      }
+
+      // 上传数据到 Google Sheet
+      const studentName = document.getElementById("studentName").value || "匿名";
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: studentName,
+          sentence: currentSentence,
+          answer: answer,
+          correct: answer === currentSentence ? "是" : "否",
+          timestamp: new Date().toLocaleString()
+        })
+      });
     }
+
+    function nextSentence() {
+      currentIndex++;
+      loadSentence();
+    }
+
+    // 初始化
+    loadSentence();
   </script>
 </body>
 </html>
+
 
