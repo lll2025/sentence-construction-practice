@@ -2,96 +2,115 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>生成练习与二维码</title>
+  <title>连词成句练习</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    #qrcode { margin-top: 20px; }
-    textarea { width: 100%; height: 100px; }
-    .exercise { margin-top: 20px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    textarea { width: 100%; height: 100px; margin-bottom: 10px; }
+    .word-container { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
+    .word { padding: 8px 12px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; cursor: grab; }
+    .dropzone { min-height: 50px; border: 2px dashed #bbb; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+    button { margin: 5px; padding: 6px 12px; }
   </style>
 </head>
 <body>
-  <h2>输入练习句子</h2>
-  <textarea id="sentenceInput" placeholder="请输入句子..."></textarea><br><br>
-  <button onclick="generateExercise()">生成练习和二维码</button>
-
-  <div id="exerciseContainer" class="exercise" style="display:none;">
-    <h3>练习题</h3>
-    <div id="exerciseContent"></div>
-  </div>
-
+  <h2>老师端：输入练习句子（每行一句，词之间用空格分开）</h2>
+  <textarea id="sentencesInput" placeholder="例如：我 喜欢 学习 中文\n明天 我们 去 公园 散步"></textarea>
+  <button onclick="generateQRCode()">生成练习和二维码</button>
   <div id="qrcode"></div>
 
   <script>
-    function generateExercise() {
-      const sentence = document.getElementById("sentenceInput").value.trim();
-      if (!sentence) {
-        alert("请输入句子！");
-        return;
-      }
+    function generateQRCode() {
+      const sentences = document.getElementById("sentencesInput").value.trim();
+      if (!sentences) { alert("请输入句子！"); return; }
 
-      // 简单的练习生成逻辑：随机挖掉一个词
-      const words = sentence.split(/[\s，。！？]/).filter(w => w.length > 0);
-      if (words.length < 2) {
-        alert("句子太短，无法生成练习。");
-        return;
-      }
-      const randomIndex = Math.floor(Math.random() * words.length);
-      const answer = words[randomIndex];
-      const exerciseSentence = sentence.replace(answer, "____");
+      const encoded = encodeURIComponent(sentences);
+      const url = window.location.origin + window.location.pathname + "?exercise=" + encoded;
 
-      // 在页面显示练习题
-      const exerciseDiv = document.getElementById("exerciseContainer");
-      document.getElementById("exerciseContent").innerHTML = `
-        题目：${exerciseSentence}<br>
-        (答案：${answer})
-      `;
-      exerciseDiv.style.display = "block";
-
-      // 生成一个练习页面 URL（用 base64 编码句子和答案）
-      const encoded = encodeURIComponent(btoa(JSON.stringify({
-        q: exerciseSentence,
-        a: answer
-      })));
-      const exerciseURL = window.location.origin + window.location.pathname + "?exercise=" + encoded;
-
-      // 清空旧二维码
       document.getElementById("qrcode").innerHTML = "";
-      // 生成新的二维码
       new QRCode(document.getElementById("qrcode"), {
-        text: exerciseURL,
+        text: url,
         width: 200,
         height: 200
       });
-
-      console.log("练习页面URL：", exerciseURL);
     }
 
-    // 学生端：如果 URL 中有练习参数，就直接进入练习模式
-    window.onload = function() {
-      const params = new URLSearchParams(window.location.search);
-      if (params.has("exercise")) {
-        const data = JSON.parse(atob(decodeURIComponent(params.get("exercise"))));
-        document.body.innerHTML = `
-          <h2>手机练习</h2>
-          <p>题目：${data.q}</p>
-          <input id="studentAnswer" placeholder="请输入答案">
-          <button onclick="checkAnswer('${data.a}')">提交</button>
-          <div id="feedback"></div>
-        `;
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
       }
+      return array;
     }
 
-    function checkAnswer(correct) {
-      const userAns = document.getElementById("studentAnswer").value.trim();
-      const feedback = document.getElementById("feedback");
-      if (userAns === correct) {
-        feedback.innerHTML = "<p style='color:green;'>✅ 答对了！</p>";
-      } else {
-        feedback.innerHTML = "<p style='color:red;'>❌ 错误。正确答案是：" + correct + "</p>";
-      }
+    function initExercise(sentences) {
+      const container = document.createElement("div");
+      document.body.innerHTML = "<h2>学生端：连词成句练习</h2>";
+      document.body.appendChild(container);
+
+      sentences.forEach((sentence, index) => {
+        const words = sentence.split(" ").filter(w => w);
+        const shuffled = shuffle([...words]);
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = `<h3>第 ${index + 1} 题</h3>`;
+
+        const wordContainer = document.createElement("div");
+        wordContainer.className = "word-container";
+        shuffled.forEach(word => {
+          const w = document.createElement("div");
+          w.className = "word";
+          w.textContent = word;
+          w.draggable = true;
+
+          w.addEventListener("dragstart", e => {
+            e.dataTransfer.setData("text/plain", word);
+            e.target.style.opacity = "0.5";
+          });
+          w.addEventListener("dragend", e => {
+            e.target.style.opacity = "1";
+          });
+
+          wordContainer.appendChild(w);
+        });
+
+        const dropzone = document.createElement("div");
+        dropzone.className = "dropzone";
+        dropzone.addEventListener("dragover", e => e.preventDefault());
+        dropzone.addEventListener("drop", e => {
+          e.preventDefault();
+          const word = e.dataTransfer.getData("text/plain");
+          const w = document.createElement("div");
+          w.className = "word";
+          w.textContent = word;
+          dropzone.appendChild(w);
+        });
+
+        const checkBtn = document.createElement("button");
+        checkBtn.textContent = "检查答案";
+        checkBtn.addEventListener("click", () => {
+          const answer = Array.from(dropzone.querySelectorAll(".word")).map(w => w.textContent).join(" ");
+          if (answer === sentence) {
+            alert("✅ 正确！");
+          } else {
+            alert("❌ 错误！正确答案是：" + sentence);
+          }
+        });
+
+        wrapper.appendChild(wordContainer);
+        wrapper.appendChild(dropzone);
+        wrapper.appendChild(checkBtn);
+        container.appendChild(wrapper);
+      });
+    }
+
+    // 学生端入口
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("exercise")) {
+      const sentences = decodeURIComponent(params.get("exercise")).split("\n");
+      initExercise(sentences);
     }
   </script>
 </body>
 </html>
+
