@@ -1,157 +1,245 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>连词成句练习</title>
 <style>
-body { font-family: '楷体', sans-serif; background: #f0f5f9; margin:0; padding:0; display:flex; justify-content:center; align-items:flex-start; min-height:100vh; flex-direction:column;}
-#teacher-section, #student-section { display:none; width:90%; max-width:600px; margin:20px auto; padding:20px; background:rgba(255,255,255,0.9); border-radius:20px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
-h2 { text-align:center; color:#555;}
-textarea { width:100%; height:180px; font-size:18px; padding:15px; border-radius:10px; border:1px solid #ccc; resize:none;}
-button { background:#0099cc; color:white; border:none; border-radius:10px; padding:12px 25px; font-size:18px; cursor:pointer; margin-top:10px;}
-button:hover { background:#0077a3;}
-#qrcode { text-align:center; margin-top:20px;}
-#student-section #modules { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-bottom:30px;}
-.module { width:130px; height:50px; background:#f4f4f4; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 6px rgba(0,0,0,0.1);}
-#student-section #words { display:flex; flex-wrap:wrap; gap:15px; justify-content:center;}
-.word { padding:12px 25px; border:1px solid #0099cc; border-radius:10px; cursor:grab; background:#e6f2f7; color:#0099cc; font-size:20px; font-weight:bold;}
-.word:hover { background:#d0e8ed;}
-#button-container { display:flex; justify-content:space-between; margin-top:30px;}
-#finish-message { display:none; font-size:28px; color:#0099cc; text-align:center; margin:20px 0;}
+body {
+    font-family: '楷体', sans-serif;
+    background: linear-gradient(135deg, #f0f5f9 0%, #e0e8ed 100%);
+    color: #333;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+#input-section, #qrcode-section, #student-section, #game-section {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    padding: 30px;
+    width: 90%;
+    max-width: 600px;
+    margin-bottom: 30px;
+}
+textarea { width: 100%; height: 200px; border-radius:10px; padding:15px; font-size:16px; }
+button { background-color: #0099cc; color:white; border:none; border-radius:10px; padding:12px 25px; font-size:16px; cursor:pointer; margin-top:10px; }
+button:hover { background-color:#0077a3; }
+#modules { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; justify-content:center; }
+.module { width:120px; height:50px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:#f4f4f4; cursor:pointer; box-shadow:0 5px 10px rgba(0,0,0,0.1); font-size:18px; }
+.module:hover { background:#eaeaea; }
+#words { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+.word { padding:10px 20px; border:1px solid #0099cc; border-radius:10px; cursor:grab; background-color:#e6f2f7; color:#0099cc; font-weight:bold; font-size:20px; }
+.word:hover { background-color:#d0e8ed; }
+#finish-message { display:none; font-size:28px; font-weight:bold; color:#0099cc; text-align:center; margin-bottom:20px; }
 </style>
 </head>
 <body>
 
-<div id="teacher-section">
-<h2>教师端：输入练习句子</h2>
-<textarea id="sentences-input" placeholder="每行一个句子，每个词用空格或逗号隔开"></textarea>
-<button id="generate-btn">生成二维码</button>
-<div id="qrcode"></div>
+<!-- 老师输入区域 -->
+<div id="input-section">
+    <h2>老师输入句子</h2>
+    <textarea id="sentences-input" placeholder="每行一个句子，每个词用空格隔开"></textarea>
+    <button id="generate-btn">生成二维码</button>
 </div>
 
-<div id="student-section">
-<h2>学生练习</h2>
-<label>姓名：<input type="text" id="student-name" style="font-size:18px;"></label>
-<div id="modules"></div>
-<div id="words"></div>
-<div id="button-container">
-<button id="prev-button">上一个</button>
-<button id="next-button" disabled>下一个</button>
-</div>
-<div id="finish-message">恭喜你完成练习！</div>
-<button id="submit-btn" style="display:none;">提交答案</button>
+<!-- 二维码区域 -->
+<div id="qrcode-section" style="display:none;">
+    <h2>二维码</h2>
+    <div id="qrcode"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<!-- 学生输入姓名 -->
+<div id="student-section" style="display:none;">
+    <h2>请输入姓名</h2>
+    <input type="text" id="student-name" placeholder="学生姓名" style="width:80%;padding:10px;font-size:16px;">
+    <button id="start-btn">开始练习</button>
+</div>
+
+<!-- 游戏区 -->
+<div id="game-section" style="display:none;">
+    <div id="modules"></div>
+    <div id="words"></div>
+    <div style="display:flex; justify-content:space-between; margin-top:20px;">
+        <button id="prev-btn">上一个</button>
+        <button id="next-btn" disabled>下一个</button>
+    </div>
+</div>
+
+<div id="finish-message">恭喜你，练习完成！</div>
+
+<!-- QRCode.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-const teacherSection = document.getElementById('teacher-section');
-const studentSection = document.getElementById('student-section');
-const sentencesInput = document.getElementById('sentences-input');
+const teacherInput = document.getElementById('sentences-input');
 const generateBtn = document.getElementById('generate-btn');
 const qrcodeDiv = document.getElementById('qrcode');
+const qrcodeSection = document.getElementById('qrcode-section');
 
+const studentSection = document.getElementById('student-section');
+const studentNameInput = document.getElementById('student-name');
+const startBtn = document.getElementById('start-btn');
+
+const gameSection = document.getElementById('game-section');
 const modulesDiv = document.getElementById('modules');
 const wordsDiv = document.getElementById('words');
-const nextBtn = document.getElementById('next-button');
-const prevBtn = document.getElementById('prev-button');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
 const finishMessage = document.getElementById('finish-message');
-const submitBtn = document.getElementById('submit-btn');
-const studentNameInput = document.getElementById('student-name');
 
 let sentences = [];
-let currentIndex = 0;
-let userAnswers = [];
+let currentSentenceIndex = 0;
+let studentName = '';
+let studentAnswers = [];
 
-function shuffleArray(array) { for(let i=array.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [array[i],array[j]]=[array[j],array[i]];} return array; }
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB0hyTySOU0d97-3qBs0E8QqTS5vk2hhGdFieQYh0FrkENbqGx1eqm_ADAolGf9LWG/exec";
 
-function startStudentGame() {
-  if(currentIndex>=sentences.length){
-    modulesDiv.style.display='none'; wordsDiv.style.display='none'; nextBtn.style.display='none'; prevBtn.style.display='none';
-    finishMessage.style.display='block'; submitBtn.style.display='inline-block';
-    return;
-  }
-  const sentence = sentences[currentIndex];
-  const words = sentence.split(/[,\s]+/).filter(w=>w.trim()!=='');
-  const shuffled = shuffleArray([...words]);
+// 生成二维码（老师端）
+generateBtn.addEventListener('click', ()=>{
+    const input = teacherInput.value.trim();
+    if(!input){ alert('请输入句子'); return; }
+    sentences = input.split('\n').filter(s=>s.trim()!=='');
+    const encoded = btoa(JSON.stringify(sentences));
+    const url = window.location.origin + window.location.pathname + '?role=student&data=' + encoded;
+    qrcodeDiv.innerHTML = '';
+    new QRCode(qrcodeDiv, {text:url,width:200,height:200,colorDark:"#000000",colorLight:"#ffffff"});
+    qrcodeSection.style.display='block';
+});
 
-  modulesDiv.innerHTML=''; wordsDiv.innerHTML='';
-  words.forEach(()=>{ let m = document.createElement('div'); m.classList.add('module'); m.addEventListener('click',()=>{ if(m.textContent){ let w=m.textContent;m.textContent=''; const hiddenWord=Array.from(wordsDiv.children).find(el=>el.textContent===w&&el.style.display==='none'); if(hiddenWord) hiddenWord.style.display=''; else{ let we=document.createElement('div'); we.classList.add('word'); we.textContent=w; we.id='word-'+Math.random().toString(36).substr(2,9); we.draggable=true; we.addEventListener('dragstart',(e)=>{e.dataTransfer.setData('text',we.id);}); we.addEventListener('click',()=>{ const empty=Array.from(modulesDiv.children).find(m=>m.textContent===''); if(empty){ empty.textContent=w; we.style.display='none'; checkAnswer();}}); wordsDiv.appendChild(we);} checkAnswer(); }}); modulesDiv.appendChild(m); });
-
-  shuffled.forEach(w=>{ let we=document.createElement('div'); we.classList.add('word'); we.textContent=w; we.id='word-'+Math.random().toString(36).substr(2,9); we.draggable=true;
-    we.addEventListener('dragstart',(e)=>{e.dataTransfer.setData('text',we.id);});
-    we.addEventListener('click',()=>{ const empty=Array.from(modulesDiv.children).find(m=>m.textContent===''); if(empty){ empty.textContent=w; we.style.display='none'; checkAnswer(); }});
-    wordsDiv.appendChild(we);
-  });
-
-  prevBtn.disabled = currentIndex===0;
-  nextBtn.disabled=true;
+// 解析学生端
+function getQueryVariable(variable){
+    const query = window.location.search.substring(1);
+    const vars = query.split("&");
+    for(let i=0;i<vars.length;i++){
+        const pair = vars[i].split("=");
+        if(pair[0] == variable){ return decodeURIComponent(pair[1]); }
+    }
+    return null;
 }
 
-function checkAnswer() {
-  const sentence = sentences[currentIndex];
-  const correctWords = sentence.split(/[,\s]+/).filter(w=>w.trim()!=='');
-  const userWords = Array.from(modulesDiv.children).map(m=>m.textContent);
-  if(userWords.every(w=>w!=='')){
-    nextBtn.disabled = !userWords.every((w,i)=>w===correctWords[i]);
-  } else nextBtn.disabled=true;
-}
+window.onload = ()=>{
+    const role = getQueryVariable('role');
+    const data = getQueryVariable('data');
+    if(role==='student' && data){
+        sentences = JSON.parse(atob(data));
+        document.getElementById('input-section').style.display='none';
+        qrcodeSection.style.display='none';
+        studentSection.style.display='block';
+    }
+};
 
-nextBtn.addEventListener('click',()=>{ userAnswers[currentIndex]=Array.from(modulesDiv.children).map(m=>m.textContent); currentIndex++; startStudentGame(); });
-prevBtn.addEventListener('click',()=>{ currentIndex--; startStudentGame(); });
+// 学生输入姓名后开始
+startBtn.addEventListener('click', ()=>{
+    studentName = studentNameInput.value.trim();
+    if(!studentName){ alert('请输入姓名'); return; }
+    studentSection.style.display='none';
+    gameSection.style.display='block';
+    currentSentenceIndex=0;
+    studentAnswers=[];
+    startGame();
+});
 
-submitBtn.addEventListener('click',()=>{
-  const name = studentNameInput.value.trim();
-  if(!name){ alert('请输入姓名'); return; }
-  userAnswers[currentIndex]=Array.from(modulesDiv.children).map(m=>m.textContent);
+// 游戏逻辑（最早版本练习方式）
+function startGame(){
+    if(currentSentenceIndex >= sentences.length){
+        gameSection.style.display='none';
+        finishMessage.style.display='block';
+        submitAnswers();
+        return;
+    }
+    const currentSentence = sentences[currentSentenceIndex];
+    const words = currentSentence.split(/\s+/).filter(w=>w.trim()!=='');
+    const shuffled = shuffleArray([...words]);
 
-  const payload = [];
-  for(let i=0;i<sentences.length;i++){
-    const correct = sentences[i].split(/[,\s]+/).filter(w=>w.trim()!=='');
-    const answer = userAnswers[i] || [];
-    payload.push({
-      姓名:name,
-      题目:sentences[i],
-      学生答案:answer.join(' '),
-      正确答案:correct.join(' '),
-      是否正确:answer.join(' ')==correct.join(' ')?'是':'否',
-      提交时间:new Date().toLocaleString()
+    modulesDiv.innerHTML='';
+    wordsDiv.innerHTML='';
+
+    words.forEach(()=>{ 
+        const m = document.createElement('div'); m.className='module'; modulesDiv.appendChild(m); 
     });
-  }
 
-  // 提交到 Google Apps Script
-  fetch('https://script.google.com/macros/s/AKfycbzB0hyTySOU0d97-3qBs0E8QqTS5vk2hhGdFieQYh0FrkENbqGx1eqm_ADAolGf9LWG/exec',{
-    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
-  }).then(res=>{ alert('提交成功'); location.reload(); }).catch(e=>{ alert('提交失败'); console.error(e); });
-});
+    shuffled.forEach(word=>{
+        const w = document.createElement('div'); w.className='word'; w.textContent=word; 
+        w.id = `word-${Math.random().toString(36).substr(2,9)}`;
+        w.draggable=true;
+        w.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text', w.id); });
+        w.addEventListener('click', ()=>{
+            const emptyModule = Array.from(modulesDiv.children).find(m=>m.textContent==='');
+            if(emptyModule){ emptyModule.textContent = word; w.style.display='none'; checkAnswer(); }
+        });
+        wordsDiv.appendChild(w);
+    });
 
-// 检测 URL 参数判断角色
-function getUrlParam(name){ const url = new URL(window.location.href); return url.searchParams.get(name); }
-const role = getUrlParam('role');
-if(role==='student'){
-  teacherSection.style.display='none'; studentSection.style.display='block';
-  const data = getUrlParam('data');
-  if(data){ sentences = JSON.parse(atob(data)); }
-  startStudentGame();
-}else{
-  teacherSection.style.display='block';
+    modulesDiv.querySelectorAll('.module').forEach(m=>{
+        m.addEventListener('dragover', e=>e.preventDefault());
+        m.addEventListener('drop', e=>{
+            e.preventDefault();
+            const data = e.dataTransfer.getData('text');
+            const el = document.getElementById(data);
+            if(el){ m.textContent=el.textContent; el.style.display='none'; checkAnswer(); }
+        });
+        m.addEventListener('click', ()=>{
+            if(m.textContent!==''){
+                const word = m.textContent; m.textContent='';
+                const hiddenWord = Array.from(wordsDiv.children).find(w=>w.textContent===word && w.style.display==='none');
+                if(hiddenWord) hiddenWord.style.display='';
+                checkAnswer();
+            }
+        });
+    });
+
+    prevBtn.disabled = currentSentenceIndex===0;
+    nextBtn.disabled=true;
 }
 
-generateBtn.addEventListener('click',()=>{
-  const input = sentencesInput.value.trim();
-  if(!input){ alert('请输入句子'); return; }
-  sentences = input.split('\n').filter(s=>s.trim()!=='');
-  const encoded = btoa(JSON.stringify(sentences));
-  const url = window.location.origin+window.location.pathname+'?role=student&data='+encoded;
-  qrcodeDiv.innerHTML='';
-  QRCode.toCanvas(url,{width:200},function(err,canvas){ if(err) console.error(err); qrcodeDiv.appendChild(canvas); });
-  alert('二维码已生成，请在二维码页面扫码练习！');
+function checkAnswer(){
+    const currentSentence = sentences[currentSentenceIndex];
+    const correct = currentSentence.split(/\s+/).filter(w=>w.trim()!=='');
+    const user = Array.from(modulesDiv.children).map(m=>m.textContent);
+    const allFilled = user.every(u=>u!=='');
+    nextBtn.disabled=!allFilled;
+}
+
+nextBtn.addEventListener('click', ()=>{
+    const currentSentence = sentences[currentSentenceIndex];
+    const correct = currentSentence.split(/\s+/).filter(w=>w.trim()!=='');
+    const user = Array.from(modulesDiv.children).map(m=>m.textContent);
+    studentAnswers.push(user.join(' '));
+    currentSentenceIndex++;
+    startGame();
 });
+
+prevBtn.addEventListener('click', ()=>{
+    if(currentSentenceIndex>0){ currentSentenceIndex--; startGame(); }
+});
+
+function shuffleArray(arr){
+    for(let i=arr.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    return arr;
+}
+
+function submitAnswers(){
+    const payload = {
+        name: studentName,
+        answers: studentAnswers,
+        questions: sentences
+    };
+    fetch(GOOGLE_SCRIPT_URL,{
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+    });
+}
 </script>
 </body>
 </html>
-
-
 
 
 
