@@ -1,177 +1,216 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>连词成句练习</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-      background-color: #f4f6f9;
-    }
-    h2 {
-      color: #333;
-    }
-    #sentenceContainer {
-      margin: 20px auto;
-      padding: 20px;
-      width: 90%;
-      max-width: 600px;
-      min-height: 150px;
-      border: 2px dashed #aaa;
-      border-radius: 10px;
-      background-color: #fff;
-    }
-    .word {
-      display: inline-block;
-      padding: 8px 12px;
-      margin: 5px;
-      font-size: 18px;
-      background-color: #e0f7fa;
-      border: 1px solid #0097a7;
-      border-radius: 8px;
-      cursor: pointer;
-      user-select: none;
-    }
-    #answer {
-      margin: 20px auto;
-      padding: 10px;
-      min-height: 50px;
-      width: 90%;
-      max-width: 600px;
-      border: 2px solid #4caf50;
-      border-radius: 10px;
-      background-color: #f1f8e9;
-    }
-    button {
-      margin: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      background-color: #4caf50;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    #result {
-      margin-top: 15px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    #studentNameContainer {
-      margin: 15px 0;
-    }
-    input[type="text"] {
-      padding: 8px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连词成句练习</title>
+    <style>
+        body {
+            font-family: '楷体', sans-serif;
+            background: linear-gradient(135deg, #f0f5f9 0%, #e0e8ed 100%);
+            color: #333;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        /* 省略样式，和你原来的一样 */
+    </style>
 </head>
+
 <body>
-  <h2>连词成句练习</h2>
+    <div id="input-section">
+        <h2>输入句子</h2>
+        <textarea id="sentences-input" placeholder="输入若干个句子，每个词之间用空格隔开，每句一行"></textarea>
+        <button id="start-button">开始练习</button>
+    </div>
 
-  <div id="studentNameContainer">
-    <label>请输入姓名: </label>
-    <input type="text" id="studentName" placeholder="姓名">
-  </div>
+    <div id="game-section" style="display: none;">
+        <div id="modules"></div>
+        <div id="words"></div>
+        <div id="button-container">
+            <button id="prev-button">上一个</button>
+            <button id="next-button" disabled>下一个</button>
+        </div>
+    </div>
 
-  <div id="sentenceContainer"></div>
-  <div id="answer"></div>
-  
-  <button onclick="checkAnswer()">提交答案</button>
-  <button onclick="nextSentence()">下一题</button>
-  <div id="result"></div>
+    <div id="finish-message">恭喜你，练习完成！</div>
+    <button id="return-button">返回</button>
 
-  <script>
-    // Google Apps Script API 地址（替换成你自己的）
-    const SCRIPT_URL = "https://script.google.com/macros/s/你的AppsScript部署ID/exec";
+    <script>
+        const SCRIPT_URL = "https://script.google.com/a/macros/nu.edu.kz/s/AKfycbwp5z7tW26YHhhm10KVwveZghfTB9WnZAXk0PRcOMNIjvZvn80OdkEBKzILYqdOxgUrqg/exec";
 
-    // 获取题目数据（来自 URL 参数 data）
-    const params = new URLSearchParams(window.location.search);
-    const sentences = params.get("data") ? params.get("data").split("\n") : [];
-    let currentIndex = 0;
-    let currentSentence = "";
+        const inputSection = document.getElementById('input-section');
+        const gameSection = document.getElementById('game-section');
+        const sentencesInput = document.getElementById('sentences-input');
+        const startButton = document.getElementById('start-button');
+        const modulesDiv = document.getElementById('modules');
+        const wordsDiv = document.getElementById('words');
+        const nextButton = document.getElementById('next-button');
+        const prevButton = document.getElementById('prev-button');
+        const finishMessage = document.getElementById('finish-message');
+        const returnButton = document.getElementById('return-button');
 
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
+        let sentences = [];
+        let currentSentenceIndex = 0;
 
-    function loadSentence() {
-      if (currentIndex >= sentences.length) {
-        document.getElementById("sentenceContainer").innerHTML = "练习结束！";
-        document.getElementById("answer").innerHTML = "";
-        return;
-      }
-      currentSentence = sentences[currentIndex].trim();
-      const words = shuffle(currentSentence.split(" ").filter(w => w.length > 0));
+        startButton.addEventListener('click', () => {
+            const inputText = sentencesInput.value;
+            sentences = inputText.split('\n').filter(sentence => sentence.trim() !== '');
+            if (sentences.length === 0) {
+                alert('请输入至少一个句子');
+                return;
+            }
+            inputSection.style.display = 'none';
+            gameSection.style.display = 'block';
+            finishMessage.style.display = 'none';
+            returnButton.style.display = 'none';
+            currentSentenceIndex = 0;
+            startGame();
+        });
 
-      document.getElementById("sentenceContainer").innerHTML = "";
-      document.getElementById("answer").innerHTML = "";
-      document.getElementById("result").innerHTML = "";
+        function startGame() {
+            if (currentSentenceIndex >= sentences.length) {
+                gameSection.style.display = 'none';
+                finishMessage.style.display = 'block';
+                returnButton.style.display = 'block';
+                return;
+            }
 
-      words.forEach(word => {
-        const span = document.createElement("span");
-        span.className = "word";
-        span.innerText = word;
-        span.onclick = function () {
-          document.getElementById("answer").appendChild(span);
-        };
-        document.getElementById("sentenceContainer").appendChild(span);
-      });
-    }
+            const currentSentence = sentences[currentSentenceIndex];
+            const words = currentSentence.split(/\s+/).filter(word => word.trim() !== '');
+            const shuffledWords = shuffleArray([...words]);
 
-    function checkAnswer() {
-      const answer = Array.from(document.getElementById("answer").children).map(el => el.innerText).join(" ");
-      const resultDiv = document.getElementById("result");
-      if (!answer) {
-        resultDiv.innerText = "请先选择单词！";
-        resultDiv.style.color = "orange";
-        return;
-      }
+            modulesDiv.innerHTML = '';
+            wordsDiv.innerHTML = '';
 
-      if (answer === currentSentence) {
-        resultDiv.innerText = "✅ 正确！";
-        resultDiv.style.color = "green";
-      } else {
-        resultDiv.innerText = "❌ 错误！正确答案是: " + currentSentence;
-        resultDiv.style.color = "red";
-      }
+            words.forEach(() => {
+                const module = document.createElement('div');
+                module.classList.add('module');
+                module.addEventListener('dragover', e => e.preventDefault());
+                module.addEventListener('drop', e => {
+                    e.preventDefault();
+                    const data = e.dataTransfer.getData('text');
+                    const draggedWord = document.getElementById(data);
+                    if (draggedWord) {
+                        module.textContent = draggedWord.textContent;
+                        draggedWord.style.display = 'none';
+                        checkAnswer();
+                    }
+                });
+                modulesDiv.appendChild(module);
+            });
 
-      // 上传数据到 Google Sheet
-      const studentName = document.getElementById("studentName").value || "匿名";
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: studentName,
-          sentence: currentSentence,
-          answer: answer,
-          correct: answer === currentSentence ? "是" : "否",
-          timestamp: new Date().toLocaleString()
-        })
-      });
-    }
+            shuffledWords.forEach(word => {
+                const wordElement = document.createElement('div');
+                wordElement.classList.add('word');
+                wordElement.textContent = word;
+                wordElement.id = `word-${word}-${Math.random().toString(36).substr(2, 9)}`;
+                wordElement.draggable = true;
+                wordElement.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text', wordElement.id);
+                });
+                wordElement.addEventListener('click', () => {
+                    const emptyModule = Array.from(modulesDiv.children).find(module => module.textContent === '');
+                    if (emptyModule) {
+                        emptyModule.textContent = word;
+                        wordElement.style.display = 'none';
+                        checkAnswer();
+                    }
+                });
+                wordsDiv.appendChild(wordElement);
+            });
 
-    function nextSentence() {
-      currentIndex++;
-      loadSentence();
-    }
+            prevButton.disabled = currentSentenceIndex === 0;
+            nextButton.disabled = true;
+        }
 
-    // 初始化
-    loadSentence();
-  </script>
+        function checkAnswer() {
+            const currentSentence = sentences[currentSentenceIndex];
+            const correctWords = currentSentence.split(/\s+/).filter(word => word.trim() !== '');
+            const userWords = Array.from(modulesDiv.children).map(m => m.textContent);
+            const allFilled = userWords.every(word => word !== '');
+
+            if (!allFilled) {
+                nextButton.disabled = true;
+                return;
+            }
+
+            const isCorrect = userWords.length === correctWords.length &&
+                              userWords.every((w, i) => w === correctWords[i]);
+
+            if (isCorrect) {
+                nextButton.disabled = false;
+                logResult(currentSentence, true);
+            } else {
+                nextButton.disabled = true;
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function goToNextSentence() {
+            if (currentSentenceIndex === sentences.length - 1) {
+                gameSection.style.display = 'none';
+                finishMessage.style.display = 'block';
+                returnButton.style.display = 'block';
+            } else {
+                currentSentenceIndex++;
+                startGame();
+            }
+        }
+
+        nextButton.addEventListener('click', goToNextSentence);
+        prevButton.addEventListener('click', () => {
+            currentSentenceIndex--;
+            startGame();
+        });
+
+        modulesDiv.addEventListener('click', e => {
+            if (e.target.classList.contains('module') && e.target.textContent !== '') {
+                const word = e.target.textContent;
+                e.target.textContent = '';
+                const existingWord = Array.from(wordsDiv.children).find(el => el.textContent === word && el.style.display === 'none');
+                if (existingWord) {
+                    existingWord.style.display = '';
+                }
+                checkAnswer();
+            }
+        });
+
+        returnButton.addEventListener('click', () => {
+            inputSection.style.display = 'block';
+            gameSection.style.display = 'none';
+            finishMessage.style.display = 'none';
+            returnButton.style.display = 'none';
+            currentSentenceIndex = 0;
+        });
+
+        // 把结果发送到 Google Sheet
+        function logResult(sentence, correct) {
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: new URLSearchParams({
+                    "sentence": sentence,
+                    "result": correct ? "正确" : "错误",
+                    "timestamp": new Date().toLocaleString()
+                })
+            }).catch(err => console.error("数据保存失败", err));
+        }
+    </script>
 </body>
+
 </html>
+
 
 
