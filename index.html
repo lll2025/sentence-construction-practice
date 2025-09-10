@@ -3,239 +3,365 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>连词成句练习</title>
+<title>连词成句练习 - 教师+学生测试版</title>
 <style>
-body {
-    font-family: '楷体', sans-serif;
-    background: linear-gradient(135deg, #f0f5f9 0%, #e0e8ed 100%);
-    color: #333;
-    padding: 30px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-}
-#input-section, #qrcode-section, #student-section, #game-section {
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 20px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    padding: 30px;
-    width: 90%;
-    max-width: 600px;
-    margin-bottom: 30px;
-}
-textarea { width: 100%; height: 200px; border-radius:10px; padding:15px; font-size:16px; }
-button { background-color: #0099cc; color:white; border:none; border-radius:10px; padding:12px 25px; font-size:16px; cursor:pointer; margin-top:10px; }
-button:hover { background-color:#0077a3; }
-#modules { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; justify-content:center; }
-.module { width:120px; height:50px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:#f4f4f4; cursor:pointer; box-shadow:0 5px 10px rgba(0,0,0,0.1); font-size:18px; }
-.module:hover { background:#eaeaea; }
-#words { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
-.word { padding:10px 20px; border:1px solid #0099cc; border-radius:10px; cursor:grab; background-color:#e6f2f7; color:#0099cc; font-weight:bold; font-size:20px; }
-.word:hover { background-color:#d0e8ed; }
-#finish-message { display:none; font-size:28px; font-weight:bold; color:#0099cc; text-align:center; margin-bottom:20px; }
+body { font-family: '楷体', sans-serif; background: #f0f5f9; color: #333; margin: 0; padding: 20px; }
+#teacher-section, #student-section { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
+textarea { width: 100%; height: 150px; font-size: 16px; padding: 10px; border-radius: 10px; border: 1px solid #ccc; resize: none; box-sizing: border-box; }
+button { padding: 10px 20px; border-radius: 10px; border: none; background: #0099cc; color: #fff; cursor: pointer; margin-top: 10px; font-size: 16px; }
+button:hover { background: #0077a3; }
+button:disabled { background: #ccc; cursor: not-allowed; }
+#qrcode { margin-top: 20px; text-align: center; }
+#modules, #words { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; min-height: 60px; }
+.module, .word { padding: 10px 20px; border: 1px solid #0099cc; border-radius: 10px; cursor: pointer; background: #e6f2f7; font-weight: bold; font-size: 20px; min-height: 20px; display: flex; align-items: center; justify-content: center; }
+.module:hover, .word:hover { background: #d0e8ed; }
+.module { border: 2px dashed #0099cc; background: #f8f9fa; }
+.module.filled { background: #e6f2f7; border: 1px solid #0099cc; }
+#finish-message { display: none; color: #0099cc; font-size: 24px; text-align: center; margin-top: 20px; }
+.student-info { margin-bottom: 20px; }
+.student-info input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; }
+.progress { text-align: center; margin-bottom: 20px; font-size: 18px; color: #666; }
+.instructions { background: #e8f4f8; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
 </style>
 </head>
 <body>
 
-<!-- 老师输入区域 -->
-<div id="input-section">
-    <h2>老师输入句子</h2>
-    <textarea id="sentences-input" placeholder="每行一个句子，每个词用空格隔开"></textarea>
-    <button id="generate-btn">生成二维码</button>
+<div id="teacher-section">
+<h2>🎓 教师输入题目</h2>
+<div class="instructions">
+<p>📝 <strong>使用说明：</strong></p>
+<p>• 每行输入一个句子</p>
+<p>• 词语之间用空格分开</p>
+<p>• 例如：我 爱 学习 中文</p>
+</div>
+<textarea id="teacher-sentences" placeholder="请输入句子，每行一个：&#10;我 爱 学习 中文&#10;今天 天气 很 好&#10;我们 一起 做 作业"></textarea>
+<button id="generate-qrcode">🔗 生成学生练习链接</button>
+<button id="start-student-mode" style="display:none;">👨‍🎓 进入学生练习模式</button>
+<div id="qrcode"></div>
+<div id="student-link" style="display:none; margin-top:10px;">
+<p>📱 学生可以点击下方链接进入练习：</p>
+<button id="direct-link" style="background:#28a745;">直接进入练习</button>
+</div>
 </div>
 
-<!-- 二维码区域 -->
-<div id="qrcode-section" style="display:none;">
-    <h2>二维码</h2>
-    <div id="qrcode"></div>
-</div>
-
-<!-- 学生输入姓名 -->
 <div id="student-section" style="display:none;">
-    <h2>请输入姓名</h2>
-    <input type="text" id="student-name" placeholder="学生姓名" style="width:80%;padding:10px;font-size:16px;">
-    <button id="start-btn">开始练习</button>
+<h2>👨‍🎓 学生练习区</h2>
+<div class="student-info">
+<label>👤 姓名：<input type="text" id="student-name" placeholder="请输入你的姓名"></label>
+</div>
+<div class="progress">
+<span>📊 进度：第 <span id="current-question">1</span> 题 / 共 <span id="total-questions">0</span> 题</span>
+</div>
+<div class="instructions">
+<p>🎯 <strong>练习方法：</strong>点击下方的词语，将它们按正确顺序放入上方的空格中</p>
+</div>
+<div id="modules"></div>
+<div id="words"></div>
+<div style="display:flex; justify-content:space-between; margin-top:20px;">
+<button id="prev-button">⬅️ 上一题</button>
+<button id="next-button" disabled>下一题 ➡️</button>
+</div>
+<div id="finish-message">🎉 恭喜你，练习完成！<br>📊 你的成绩已保存</div>
 </div>
 
-<!-- 游戏区 -->
-<div id="game-section" style="display:none;">
-    <div id="modules"></div>
-    <div id="words"></div>
-    <div style="display:flex; justify-content:space-between; margin-top:20px;">
-        <button id="prev-btn">上一个</button>
-        <button id="next-btn" disabled>下一个</button>
-    </div>
-</div>
-
-<div id="finish-message">恭喜你，练习完成！</div>
-
-<!-- QRCode.js CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-const teacherInput = document.getElementById('sentences-input');
-const generateBtn = document.getElementById('generate-btn');
+const teacherSentences = document.getElementById('teacher-sentences');
+const generateQRCodeBtn = document.getElementById('generate-qrcode');
+const startStudentBtn = document.getElementById('start-student-mode');
+const directLinkBtn = document.getElementById('direct-link');
 const qrcodeDiv = document.getElementById('qrcode');
-const qrcodeSection = document.getElementById('qrcode-section');
-
+const studentLinkDiv = document.getElementById('student-link');
+const teacherSection = document.getElementById('teacher-section');
 const studentSection = document.getElementById('student-section');
-const studentNameInput = document.getElementById('student-name');
-const startBtn = document.getElementById('start-btn');
-
-const gameSection = document.getElementById('game-section');
 const modulesDiv = document.getElementById('modules');
 const wordsDiv = document.getElementById('words');
-const prevBtn = document.getElementById('prev-btn');
-const nextBtn = document.getElementById('next-btn');
+const nextButton = document.getElementById('next-button');
+const prevButton = document.getElementById('prev-button');
 const finishMessage = document.getElementById('finish-message');
+const studentNameInput = document.getElementById('student-name');
+const currentQuestionSpan = document.getElementById('current-question');
+const totalQuestionsSpan = document.getElementById('total-questions');
 
 let sentences = [];
-let currentSentenceIndex = 0;
-let studentName = '';
+let currentIndex = 0;
 let studentAnswers = [];
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB0hyTySOU0d97-3qBs0E8QqTS5vk2hhGdFieQYh0FrkENbqGx1eqm_ADAolGf9LWG/exec";
-
-// 生成二维码（老师端）
-generateBtn.addEventListener('click', ()=>{
-    const input = teacherInput.value.trim();
-    if(!input){ alert('请输入句子'); return; }
-    sentences = input.split('\n').filter(s=>s.trim()!=='');
-    const encoded = btoa(JSON.stringify(sentences));
-    const url = window.location.origin + window.location.pathname + '?role=student&data=' + encoded;
-    qrcodeDiv.innerHTML = '';
-    new QRCode(qrcodeDiv, {text:url,width:200,height:200,colorDark:"#000000",colorLight:"#ffffff"});
-    qrcodeSection.style.display='block';
-});
-
-// 解析学生端
-function getQueryVariable(variable){
-    const query = window.location.search.substring(1);
-    const vars = query.split("&");
-    for(let i=0;i<vars.length;i++){
-        const pair = vars[i].split("=");
-        if(pair[0] == variable){ return decodeURIComponent(pair[1]); }
-    }
-    return null;
-}
-
-window.onload = ()=>{
-    const role = getQueryVariable('role');
-    const data = getQueryVariable('data');
-    if(role==='student' && data){
-        sentences = JSON.parse(atob(data));
-        document.getElementById('input-section').style.display='none';
-        qrcodeSection.style.display='none';
-        studentSection.style.display='block';
-    }
-};
-
-// 学生输入姓名后开始
-startBtn.addEventListener('click', ()=>{
-    studentName = studentNameInput.value.trim();
-    if(!studentName){ alert('请输入姓名'); return; }
-    studentSection.style.display='none';
-    gameSection.style.display='block';
-    currentSentenceIndex=0;
-    studentAnswers=[];
-    startGame();
-});
-
-// 游戏逻辑（最早版本练习方式）
-function startGame(){
-    if(currentSentenceIndex >= sentences.length){
-        gameSection.style.display='none';
-        finishMessage.style.display='block';
-        submitAnswers();
+// 生成练习链接
+generateQRCodeBtn.addEventListener('click', () => {
+    const inputText = teacherSentences.value.trim();
+    if (!inputText) {
+        alert('⚠️ 请先输入至少一个句子！');
         return;
     }
-    const currentSentence = sentences[currentSentenceIndex];
-    const words = currentSentence.split(/\s+/).filter(w=>w.trim()!=='');
-    const shuffled = shuffleArray([...words]);
+    
+    sentences = inputText.split('\n').filter(s => s.trim() !== '');
+    if (sentences.length === 0) {
+        alert('⚠️ 请输入至少一个有效的句子！');
+        return;
+    }
 
-    modulesDiv.innerHTML='';
-    wordsDiv.innerHTML='';
+    // 将句子数据编码到URL中（简化版本，实际应用中建议使用服务器）
+    const encodedSentences = encodeURIComponent(JSON.stringify(sentences));
+    const studentUrl = window.location.origin + window.location.pathname + '?data=' + encodedSentences;
+    
+    // 显示二维码（使用简化的文本二维码）
+    qrcodeDiv.innerHTML = `
+        <div style="border: 2px solid #0099cc; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+            <p>📱 学生练习链接已生成！</p>
+            <p style="font-size: 12px; word-break: break-all; background: white; padding: 10px; border-radius: 5px;">${studentUrl}</p>
+            <p style="color: #666; font-size: 14px;">学生可以复制此链接在手机浏览器中打开</p>
+        </div>
+    `;
+    
+    startStudentBtn.style.display = 'inline-block';
+    studentLinkDiv.style.display = 'block';
+    
+    alert('✅ 练习链接已生成！学生可以通过链接进入练习。');
+});
 
-    words.forEach(()=>{ 
-        const m = document.createElement('div'); m.className='module'; modulesDiv.appendChild(m); 
-    });
+// 直接进入学生模式
+directLinkBtn.addEventListener('click', () => {
+    startStudentMode();
+});
 
-    shuffled.forEach(word=>{
-        const w = document.createElement('div'); w.className='word'; w.textContent=word; 
-        w.id = `word-${Math.random().toString(36).substr(2,9)}`;
-        w.draggable=true;
-        w.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text', w.id); });
-        w.addEventListener('click', ()=>{
-            const emptyModule = Array.from(modulesDiv.children).find(m=>m.textContent==='');
-            if(emptyModule){ emptyModule.textContent = word; w.style.display='none'; checkAnswer(); }
-        });
-        wordsDiv.appendChild(w);
-    });
+startStudentBtn.addEventListener('click', () => {
+    startStudentMode();
+});
 
-    modulesDiv.querySelectorAll('.module').forEach(m=>{
-        m.addEventListener('dragover', e=>e.preventDefault());
-        m.addEventListener('drop', e=>{
-            e.preventDefault();
-            const data = e.dataTransfer.getData('text');
-            const el = document.getElementById(data);
-            if(el){ m.textContent=el.textContent; el.style.display='none'; checkAnswer(); }
-        });
-        m.addEventListener('click', ()=>{
-            if(m.textContent!==''){
-                const word = m.textContent; m.textContent='';
-                const hiddenWord = Array.from(wordsDiv.children).find(w=>w.textContent===word && w.style.display==='none');
-                if(hiddenWord) hiddenWord.style.display='';
+function startStudentMode() {
+    if (sentences.length === 0) {
+        const inputText = teacherSentences.value.trim();
+        if (!inputText) {
+            alert('⚠️ 请先输入句子！');
+            return;
+        }
+        sentences = inputText.split('\n').filter(s => s.trim() !== '');
+    }
+    
+    teacherSection.style.display = 'none';
+    studentSection.style.display = 'block';
+    totalQuestionsSpan.textContent = sentences.length;
+    currentIndex = 0;
+    studentAnswers = [];
+    startGame();
+}
+
+// 设置Google Sheets相关函数
+function toggleSheetsSetup() {
+    const setupDiv = document.getElementById('google-sheets-setup');
+    setupDiv.style.display = setupDiv.style.display === 'none' ? 'block' : 'none';
+}
+
+function setupGoogleSheets() {
+    const url = document.getElementById('sheets-url').value.trim();
+    if (!url) {
+        alert('请输入Google Apps Script URL');
+        return;
+    }
+    
+    // 验证URL格式
+    if (!url.includes('script.google.com') && !url.includes('script.googleusercontent.com')) {
+        alert('请输入有效的Google Apps Script URL');
+        return;
+    }
+    
+    GOOGLE_SHEETS_CONFIG.scriptUrl = url;
+    GOOGLE_SHEETS_CONFIG.useLocalStorage = false;
+    
+    alert('✅ Google Sheets 设置成功！学生完成练习后将自动保存到您的表格。');
+    toggleSheetsSetup();
+}
+
+// 初始化时显示现有成绩数量
+window.addEventListener('load', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const practiceId = urlParams.get('id');
+    const legacyData = urlParams.get('data');
+    
+    if (practiceId) {
+        // 新的ID方式
+        const practiceData = getPracticeData(practiceId);
+        if (practiceData) {
+            sentences = practiceData.sentences;
+            startStudentMode();
+        } else {
+            alert('❌ 练习已过期或不存在，请联系老师重新生成链接。');
+        }
+    } else if (legacyData) {
+        // 兼容旧的data参数方式
+        try {
+            sentences = JSON.parse(decodeURIComponent(legacyData));
+            startStudentMode();
+        } catch (e) {
+            console.error('无法解析练习数据:', e);
+            alert('❌ 练习链接格式错误，请联系老师重新生成链接。');
+        }
+    } else {
+        // 显示现有成绩数量
+        const allResults = JSON.parse(window.allResults || '[]');
+        if (allResults.length > 0) {
+            const viewBtn = document.getElementById('view-results');
+            if (viewBtn) {
+                viewBtn.textContent = `📊 查看所有成绩 (${allResults.length}条)`;
+            }
+        }
+    }
+});
+
+window.allResults = window.allResults || '[]';
+
+
+function startGame() {
+    if (currentIndex >= sentences.length) {
+        finishGame();
+        return;
+    }
+    
+    const currentSentence = sentences[currentIndex].trim();
+    const words = currentSentence.split(/\s+/).filter(w => w !== '');
+    const shuffled = shuffle([...words]);
+    
+    currentQuestionSpan.textContent = currentIndex + 1;
+    
+    modulesDiv.innerHTML = '';
+    wordsDiv.innerHTML = '';
+    
+    // 创建答题模块
+    words.forEach(() => {
+        const module = document.createElement('div');
+        module.className = 'module';
+        module.addEventListener('click', () => {
+            if (module.textContent !== '') {
+                const word = module.textContent;
+                module.textContent = '';
+                module.classList.remove('filled');
+                
+                // 找到对应的词语按钮并显示
+                const wordButtons = Array.from(wordsDiv.children);
+                const hiddenWord = wordButtons.find(w => w.textContent === word && w.style.display === 'none');
+                if (hiddenWord) {
+                    hiddenWord.style.display = '';
+                }
                 checkAnswer();
             }
         });
+        modulesDiv.appendChild(module);
     });
-
-    prevBtn.disabled = currentSentenceIndex===0;
-    nextBtn.disabled=true;
+    
+    // 创建词语按钮
+    shuffled.forEach(word => {
+        const wordButton = document.createElement('div');
+        wordButton.className = 'word';
+        wordButton.textContent = word;
+        wordButton.addEventListener('click', () => {
+            const emptyModule = Array.from(modulesDiv.children).find(m => m.textContent === '');
+            if (emptyModule) {
+                emptyModule.textContent = word;
+                emptyModule.classList.add('filled');
+                wordButton.style.display = 'none';
+                checkAnswer();
+            }
+        });
+        wordsDiv.appendChild(wordButton);
+    });
+    
+    prevButton.disabled = currentIndex === 0;
+    nextButton.disabled = true;
 }
 
-function checkAnswer(){
-    const currentSentence = sentences[currentSentenceIndex];
-    const correct = currentSentence.split(/\s+/).filter(w=>w.trim()!=='');
-    const user = Array.from(modulesDiv.children).map(m=>m.textContent);
-    const allFilled = user.every(u=>u!=='');
-    nextBtn.disabled=!allFilled;
-}
-
-nextBtn.addEventListener('click', ()=>{
-    const currentSentence = sentences[currentSentenceIndex];
-    const correct = currentSentence.split(/\s+/).filter(w=>w.trim()!=='');
-    const user = Array.from(modulesDiv.children).map(m=>m.textContent);
-    studentAnswers.push(user.join(' '));
-    currentSentenceIndex++;
-    startGame();
-});
-
-prevBtn.addEventListener('click', ()=>{
-    if(currentSentenceIndex>0){ currentSentenceIndex--; startGame(); }
-});
-
-function shuffleArray(arr){
-    for(let i=arr.length-1;i>0;i--){
-        const j=Math.floor(Math.random()*(i+1));
-        [arr[i],arr[j]]=[arr[j],arr[i]];
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
 }
 
-function submitAnswers(){
-    const payload = {
-        name: studentName,
-        answers: studentAnswers,
-        questions: sentences
-    };
-    fetch(GOOGLE_SCRIPT_URL,{
-        method:'POST',
-        mode:'no-cors',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(payload)
+function checkAnswer() {
+    const correctWords = sentences[currentIndex].trim().split(/\s+/).filter(w => w !== '');
+    const userWords = Array.from(modulesDiv.children).map(m => m.textContent);
+    const allFilled = userWords.every(w => w !== '');
+    
+    if (!allFilled) {
+        nextButton.disabled = true;
+        return;
+    }
+    
+    const correct = userWords.length === correctWords.length && 
+                   userWords.every((w, i) => w === correctWords[i]);
+    
+    nextButton.disabled = !correct;
+    
+    if (correct) {
+        nextButton.style.background = '#28a745';
+        nextButton.textContent = '✅ 正确！下一题 ➡️';
+    } else {
+        nextButton.style.background = '#dc3545';
+        nextButton.textContent = '❌ 再试试';
+        nextButton.disabled = false;
+    }
+}
+
+nextButton.addEventListener('click', () => {
+    // 记录学生答案
+    const userWords = Array.from(modulesDiv.children).map(m => m.textContent);
+    const correctWords = sentences[currentIndex].trim().split(/\s+/).filter(w => w !== '');
+    const isCorrect = userWords.every((w, i) => w === correctWords[i]);
+    
+    studentAnswers.push({
+        questionIndex: currentIndex,
+        question: sentences[currentIndex],
+        userAnswer: userWords.join(' '),
+        correctAnswer: correctWords.join(' '),
+        isCorrect: isCorrect,
+        timestamp: new Date().toISOString()
     });
+    
+    currentIndex++;
+    nextButton.style.background = '#0099cc';
+    nextButton.textContent = '下一题 ➡️';
+    startGame();
+});
+
+prevButton.addEventListener('click', () => {
+    if (currentIndex > 0) {
+        currentIndex--;
+        startGame();
+    }
+});
+
+function finishGame() {
+    studentSection.style.display = 'none';
+    finishMessage.style.display = 'block';
+    
+    // 保存学生成绩（这里使用console输出，实际应用中可以发送到服务器）
+    const studentName = studentNameInput.value || '未填写姓名';
+    const totalQuestions = sentences.length;
+    const correctAnswers = studentAnswers.filter(a => a.isCorrect).length;
+    const score = Math.round((correctAnswers / totalQuestions) * 100);
+    
+    const result = {
+        studentName: studentName,
+        totalQuestions: totalQuestions,
+        correctAnswers: correctAnswers,
+        score: score,
+        completedAt: new Date().toISOString(),
+        answers: studentAnswers
+    };
+    
+    console.log('学生成绩：', result);
+    
+    // 显示成绩
+    finishMessage.innerHTML = `
+        🎉 恭喜 ${studentName}，练习完成！<br>
+        📊 成绩：${correctAnswers}/${totalQuestions} (${score}分)<br>
+        <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #0099cc; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            🔄 重新开始练习
+        </button>
+    `;
+    
+    // TODO: 这里可以添加将成绩发送到Google Sheets或其他数据存储的代码
+    alert(`🎉 练习完成！\n👤 学生：${studentName}\n📊 成绩：${correctAnswers}/${totalQuestions} (${score}分)`);
 }
 </script>
 </body>
