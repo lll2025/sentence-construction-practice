@@ -6,7 +6,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    textarea { width: 100%; height: 100px; margin-bottom: 10px; }
+    textarea { width: 100%; height: 120px; margin-bottom: 10px; }
     .word-container { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
     .word { padding: 8px 12px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 6px; cursor: grab; }
     .dropzone { min-height: 50px; border: 2px dashed #bbb; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
@@ -24,7 +24,9 @@
       const sentences = document.getElementById("sentencesInput").value.trim();
       if (!sentences) { alert("请输入句子！"); return; }
 
-      const encoded = encodeURIComponent(sentences);
+      // 压缩空格，避免多余
+      const cleanSentences = sentences.split("\n").map(s => s.trim().replace(/\s+/g, " ")).join("\n");
+      const encoded = encodeURIComponent(cleanSentences);
       const url = window.location.origin + window.location.pathname + "?exercise=" + encoded;
 
       document.getElementById("qrcode").innerHTML = "";
@@ -49,7 +51,7 @@
       document.body.appendChild(container);
 
       sentences.forEach((sentence, index) => {
-        const words = sentence.split(" ").filter(w => w);
+        const words = sentence.split(/\s+/).filter(w => w);
         const shuffled = shuffle([...words]);
 
         const wrapper = document.createElement("div");
@@ -107,7 +109,10 @@
     // 学生端入口
     const params = new URLSearchParams(window.location.search);
     if (params.has("exercise")) {
-      const sentences = decodeURIComponent(params.get("exercise")).split("\n");
+      const sentences = decodeURIComponent(params.get("exercise"))
+        .split("\n")
+        .map(s => s.trim().replace(/\s+/g, " "))
+        .filter(s => s);
       initExercise(sentences);
     }
   </script>
