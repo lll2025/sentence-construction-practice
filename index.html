@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>连词成句练习</title>
     <style>
-        /* 全局样式，设置字体为楷体 */
         body {
             font-family: '楷体', sans-serif;
             background: linear-gradient(135deg, #f0f5f9 0%, #e0e8ed 100%);
@@ -18,10 +17,8 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            position: relative;
         }
 
-        /* 输入部分样式 */
         #input-section {
             background-color: rgba(255, 255, 255, 0.8);
             border-radius: 20px;
@@ -30,7 +27,6 @@
             width: 80%;
             max-width: 600px;
             margin-bottom: 30px;
-            animation: fadeInUp 0.8s ease-out;
         }
 
         #input-section h2 {
@@ -49,13 +45,7 @@
             margin-bottom: 20px;
             font-size: 16px;
             resize: none;
-            transition: border-color 0.3s ease;
             background-color: #f9f9f9;
-        }
-
-        #input-section textarea:focus {
-            border-color: #0099cc;
-            outline: none;
         }
 
         #input-section button,
@@ -85,10 +75,8 @@
             background-color: #ccc;
             cursor: not-allowed;
             box-shadow: none;
-            transform: none;
         }
 
-        /* 游戏部分样式 */
         #game-section {
             background-color: rgba(255, 255, 255, 0.8);
             border-radius: 20px;
@@ -96,8 +84,6 @@
             padding: 30px;
             width: 80%;
             max-width: 600px;
-            animation: fadeInUp 0.8s ease-out;
-            position: relative;
         }
 
         #modules {
@@ -108,7 +94,6 @@
             flex-wrap: wrap;
         }
 
-        /* 模块样式，添加阴影，去掉虚线 */
         .module {
             width: 130px;
             height: 50px;
@@ -117,24 +102,10 @@
             align-items: center;
             justify-content: center;
             background-color: #f4f4f4;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
             cursor: pointer;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
         }
 
-        .module:hover {
-            background-color: #eaeaea;
-            border-color: #0099cc;
-        }
-
-        #words {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-        }
-
-        /* 加粗句子中的汉字 */
         .word {
             padding: 15px 30px;
             border: 1px solid #0099cc;
@@ -142,67 +113,45 @@
             cursor: grab;
             background-color: #e6f2f7;
             color: #0099cc;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 3px 6px rgba(0, 153, 204, 0.1);
             font-size: 20px;
             font-weight: bold;
+            margin: 5px;
         }
 
-        .word:hover {
-            background-color: #d0e8ed;
-            transform: translateY(-2px);
-        }
-
-        /* 按钮容器样式，使上一个和下一个按钮分别在字板左下角和右下角 */
         #button-container {
             display: flex;
             justify-content: space-between;
             margin-top: 30px;
         }
 
-        /* 完成提示部分样式 */
         #finish-message {
             display: none;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: bold;
             color: #0099cc;
-            margin-bottom: 30px;
-            animation: fadeIn 0.8s ease-out;
+            margin-bottom: 20px;
         }
 
         #return-button {
             display: none;
         }
 
-        /* 动画效果 */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+        #qrcode {
+            margin-top: 20px;
         }
     </style>
+    <!-- 引入二维码库 -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 </head>
 
 <body>
     <div id="input-section">
         <h2>输入句子</h2>
         <textarea id="sentences-input" placeholder="输入若干个句子，每个生词用逗号或空格隔开"></textarea>
-        <button id="start-button">开始练习</button>
+        <button id="start-button">生成练习 & 二维码</button>
+        <div id="qrcode"></div>
     </div>
+
     <div id="game-section" style="display: none;">
         <div id="modules"></div>
         <div id="words"></div>
@@ -211,8 +160,10 @@
             <button id="next-button" disabled>下一个</button>
         </div>
     </div>
+
     <div id="finish-message">恭喜你，练习完成！</div>
     <button id="return-button">返回</button>
+
     <script>
         const inputSection = document.getElementById('input-section');
         const gameSection = document.getElementById('game-section');
@@ -230,13 +181,26 @@
 
         startButton.addEventListener('click', () => {
             const inputText = sentencesInput.value;
-            sentences = inputText.split('\n').filter(sentence => sentence.trim()!== '');
-            
+            sentences = inputText.split('\n').filter(sentence => sentence.trim() !== '');
+
             if (sentences.length === 0) {
                 alert('请输入至少一个句子');
                 return;
             }
-            
+
+            // 生成分享链接，把句子编码进URL参数
+            const encoded = encodeURIComponent(JSON.stringify(sentences));
+            const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
+
+            // 清空二维码并生成
+            document.getElementById("qrcode").innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), {
+                text: url,
+                width: 200,
+                height: 200
+            });
+
+            // 显示练习
             inputSection.style.display = 'none';
             gameSection.style.display = 'block';
             finishMessage.style.display = 'none';
@@ -245,22 +209,39 @@
             startGame();
         });
 
+        // 页面加载时检查URL是否带有data参数（学生扫码进入时用）
+        window.addEventListener("load", () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("data")) {
+                try {
+                    sentences = JSON.parse(decodeURIComponent(params.get("data")));
+                    inputSection.style.display = 'none';
+                    gameSection.style.display = 'block';
+                    finishMessage.style.display = 'none';
+                    returnButton.style.display = 'none';
+                    currentSentenceIndex = 0;
+                    startGame();
+                } catch (e) {
+                    console.error("解析练习数据失败", e);
+                }
+            }
+        });
+
         function startGame() {
             if (currentSentenceIndex >= sentences.length) {
-                // 显示完成消息和返回按钮
                 gameSection.style.display = 'none';
                 finishMessage.style.display = 'block';
                 returnButton.style.display = 'block';
                 return;
             }
-            
+
             if (currentSentenceIndex < 0) {
                 currentSentenceIndex = 0;
             }
-            
+
             const currentSentence = sentences[currentSentenceIndex];
-            const words = currentSentence.split(/[,\s]+/).filter(word => word.trim()!== '');
-            const shuffledWords = shuffleArray([...words]); // 创建副本再打乱
+            const words = currentSentence.split(/[,\s]+/).filter(word => word.trim() !== '');
+            const shuffledWords = shuffleArray([...words]);
 
             modulesDiv.innerHTML = '';
             wordsDiv.innerHTML = '';
@@ -288,7 +269,7 @@
                 const wordElement = document.createElement('div');
                 wordElement.classList.add('word');
                 wordElement.textContent = word;
-                wordElement.id = `word-${word}-${Math.random().toString(36).substr(2, 9)}`; // 添加随机ID避免重复单词的问题
+                wordElement.id = `word-${word}-${Math.random().toString(36).substr(2, 9)}`;
                 wordElement.draggable = true;
                 wordElement.addEventListener('dragstart', (e) => {
                     e.dataTransfer.setData('text', wordElement.id);
@@ -310,32 +291,19 @@
 
         function checkAnswer() {
             const currentSentence = sentences[currentSentenceIndex];
-            const correctWords = currentSentence.split(/[,\s]+/).filter(word => word.trim()!== '');
+            const correctWords = currentSentence.split(/[,\s]+/).filter(word => word.trim() !== '');
             const userWords = Array.from(modulesDiv.children).map(module => module.textContent);
-            
-            // 检查是否所有模块都填上了文字
+
             const allFilled = userWords.every(word => word !== '');
-            
             if (!allFilled) {
                 nextButton.disabled = true;
                 return;
             }
-            
-            const isCorrect = userWords.length === correctWords.length && 
-                              userWords.every((word, index) => word === correctWords[index]);
-            
-            if (isCorrect) {
-                // 判断是否是最后一个句子
-                if (currentSentenceIndex === sentences.length - 1) {
-                    // 在最后一个句子的情况下，启用下一个按钮，但改变其功能为显示完成消息
-                    nextButton.disabled = false;
-                } else {
-                    // 不是最后一个句子，启用下一个按钮继续下一题
-                    nextButton.disabled = false;
-                }
-            } else {
-                nextButton.disabled = true;
-            }
+
+            const isCorrect = userWords.length === correctWords.length &&
+                userWords.every((word, index) => word === correctWords[index]);
+
+            nextButton.disabled = !isCorrect;
         }
 
         function shuffleArray(array) {
@@ -347,7 +315,6 @@
         }
 
         function goToNextSentence() {
-            // 如果是最后一个句子，点击下一步按钮时显示完成消息
             if (currentSentenceIndex === sentences.length - 1) {
                 gameSection.style.display = 'none';
                 finishMessage.style.display = 'block';
@@ -365,41 +332,6 @@
             startGame();
         });
 
-        modulesDiv.addEventListener('click', (e) => {
-            if (e.target.classList.contains('module') && e.target.textContent !== '') {
-                const word = e.target.textContent;
-                e.target.textContent = '';
-                
-                // 找到对应的单词元素，如果找不到就创建一个新的
-                const existingWord = Array.from(wordsDiv.children).find(el => 
-                    el.textContent === word && el.style.display === 'none');
-                
-                if (existingWord) {
-                    existingWord.style.display = '';
-                } else {
-                    const wordElement = document.createElement('div');
-                    wordElement.classList.add('word');
-                    wordElement.textContent = word;
-                    wordElement.id = `word-${word}-${Math.random().toString(36).substr(2, 9)}`; // 添加随机ID
-                    wordElement.draggable = true;
-                    wordElement.addEventListener('dragstart', (e) => {
-                        e.dataTransfer.setData('text', wordElement.id);
-                    });
-                    wordElement.addEventListener('click', () => {
-                        const emptyModule = Array.from(modulesDiv.children).find(module => module.textContent === '');
-                        if (emptyModule) {
-                            emptyModule.textContent = word;
-                            wordElement.style.display = 'none';
-                            checkAnswer();
-                        }
-                    });
-                    wordsDiv.appendChild(wordElement);
-                }
-                
-                checkAnswer(); // 重新检查答案状态
-            }
-        });
-
         returnButton.addEventListener('click', () => {
             inputSection.style.display = 'block';
             gameSection.style.display = 'none';
@@ -409,5 +341,4 @@
         });
     </script>
 </body>
-
 </html>
